@@ -11,6 +11,10 @@
 - Write a one-line docstring on every exported function, class, and route handler. Expand only when the behavior is genuinely complex.
 - Keep all inline code out of comments: delete dead code in the same change that removes it.
 
+# Git workflow
+- Create a branch before committing: git checkout -b <type>/<slug>, then commit.
+- Push feature branches and open a PR. main receives changes only through PR merge.
+
 ## Code
 - Keep functions under 40 lines and single-purpose. Split mixed concerns into separate modules.
 - Write explicit, readable code. Use descriptive names in application code; short names are fine inside comprehensions.

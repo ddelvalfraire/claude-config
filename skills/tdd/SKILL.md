@@ -1,26 +1,15 @@
 ---
 name: tdd
-description: Spec-first TDD workflow. Use when implementing any feature or bugfix — before writing implementation code.
+description: Spec-first TDD workflow. Use when implementing any feature or bugfix, before writing implementation code.
 ---
 
-# TDD: Spec → Failing Tests → Green
+# TDD: spec, failing tests, green
 
-## Step 1 — Restate the spec as testable claims
-Before any code: list, as checkboxes, the behaviors the spec requires (happy path + edge cases + fault tolerance per the testing rules). Show me the list. If the spec is ambiguous on any point, STOP and ask — do not guess a requirement.
+1. Restate the spec as a checkbox list of behaviors: happy path, edge cases, fault paths (see testing rules). Show the list. Ask about ambiguity instead of guessing a requirement.
+2. Write one failing test per behavior, named test_<unit>_<scenario>_<expected>. Run them and confirm each fails on an assertion, not an import error. Report the output.
+3. Write the smallest implementation that turns the tests green. Run and report the real result.
+4. Diff the test list against the spec. List uncovered requirements as explicit gaps.
 
-## Step 2 — Write failing tests
-- One test per claim, names `test_<unit>_<scenario>_<expected>`.
-- Run them. They must FAIL for the right reason (assertion, not import error). Report actual output.
-
-## Step 3 — Implement minimal code to green
-- Smallest implementation that turns the tests green. No speculative abstractions.
-- Run tests, report the real output (N passed / M failed).
-
-## Step 4 — Gap check
-- Diff test claims against the original spec. List any requirement not covered as an explicit gap.
-- If coverage was partial because scope was cut, say so — never imply full coverage.
-
-## Rules
-- Never write tests after implementation to match the code's behavior — that's tautology, not testing.
-- A bugfix starts with a failing test that reproduces the bug, then the fix.
-- Do not weaken an assertion to make a test pass. If the expectation is wrong, discuss it.
+Rules:
+- Write tests before implementation. For a bugfix, write the failing reproduction first.
+- Change an assertion only by discussing it first; a failing expectation is a conversation, not an obstacle.

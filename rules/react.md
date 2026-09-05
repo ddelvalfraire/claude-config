@@ -5,29 +5,30 @@ paths:
   - "**/*.ts"
 ---
 
-# React Module Layout
+# React layout
 
-## Directory structure (feature-based, not type-based)
+Use feature-based structure:
+
 ```
 src/
   features/<feature>/
-    components/     # presentational only: props in, JSX out
-    hooks/          # feature hooks: state + side effects, NO JSX
-    api/            # network calls, serialization — no React imports
-    types.ts        # feature domain types
+    components/     # presentational: props in, JSX out
+    hooks/          # state and side effects, no JSX
+    api/            # network calls and serialization, no React imports
+    types.ts        # domain types
     index.ts        # public surface of the feature
-  components/       # shared/generic UI only (Button, Modal...)
+  components/       # shared generic UI (Button, Modal, ...)
   lib/              # pure utilities, zero React
 ```
 
-## Separation of concerns — enforce strictly
-- **UI components** render. No data fetching, no business logic, no direct store access in presentational components.
-- **Hooks** own state and effects. A hook never returns JSX, never imports from components/.
-- **API/business logic** lives in `api/` or `lib/` — plain functions, testable without rendering, no `useState`/`useEffect` inside.
-- If a component is > ~150 lines or contains fetch/store logic, it must be split: logic → hook, markup → component.
+## Separation
+- Put data fetching, business logic, and store access in hooks or api/, and keep components rendering-only.
+- Keep hooks free of JSX and free of imports from components/.
+- Write business logic as plain testable functions in api/ or lib/.
+- Split any component over ~150 lines or containing fetch/store logic: logic into a hook, markup into a component.
 
 ## Conventions
-- Components: PascalCase files (`UserProfile.tsx`). Hooks: `useX.ts`. Everything else camelCase.
-- One component per file. Colocate a component's own styles/types if small; extract at 2+ consumers.
-- Props: explicit interfaces, no `any`. Prefer composition over prop-drilling past 2 levels — use context/store.
-- No default exports for components (named exports for refactoring safety); default export allowed at feature `index.ts` only.
+- Name component files in PascalCase (UserProfile.tsx), hooks useX.ts, everything else camelCase.
+- One component per file. Colocate small private types; extract shared types at the second consumer.
+- Type all props explicitly. Use context or a store instead of prop-drilling past two levels.
+- Use named exports for components; allow a default export only at each feature index.ts.

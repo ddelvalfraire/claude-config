@@ -1,37 +1,32 @@
 ---
 name: pr
-description: Create a standardized PR. Use when asked to open a PR, or when finishing work that needs a PR.
+description: Create a standardized PR. Use when asked to open a PR or when finishing work that needs one.
 ---
 
-# PR Workflow
+# PR workflow
 
-## Pre-flight
-1. `git status` — nothing uncommitted, no unrelated changes staged. Unrelated changes → separate branch/PR, mention it.
-2. Rebase on the target branch; run tests + linter. Report real output in the PR.
+1. Check `git status`: everything committed, nothing unrelated staged. Move unrelated changes to a separate branch and mention it.
+2. Rebase on the target branch. Run tests and linter; record the output.
+3. Branch as <type>/<short-slug> (feat/fix/chore/refactor). Commit in imperative mood, one concern per commit.
+4. Open the PR with this body:
 
-## Branch & commit style
-- Branch: `<type>/<short-slug>` (feat/fix/chore/refactor).
-- Commits: imperative, one concern each, no "fix fix", no WIP dumps.
-
-## PR body — this template, nothing more
 ```markdown
 ## What
-<1–2 lines: what this changes, user-visible effect if any>
+<1-2 lines: what changes, user-visible effect if any>
 
 ## Why
-<1–2 lines: the problem or requirement. Link the issue if one exists.>
+<1-2 lines: the problem or requirement, link the issue>
 
 ## Tests
-<command run + result, e.g. "pytest -q → 24 passed, 1 skipped">
-<explicit gaps: requirements not covered, if any>
+<command + result, e.g. "pytest -q -> 24 passed, 1 skipped">
+<explicit gaps, if any>
 
 ## Risks / notes
-<only if real — breaking changes, migrations, perf. Else omit this section entirely.>
+<only for real risks: breaking changes, migrations, perf. Delete the section when empty.>
 ```
 
-## Hard rules
-- **No narration of trivial changes.** "Extracted string to variable", "renamed x", "added import" get zero lines in the PR. The diff is right there; don't paraphrase it.
-- Total body under ~15 lines unless it's a genuinely complex change.
-- No AI-speak: no "This PR aims to...", no "In order to ensure...", no restating the diff file-by-file.
-- No screenshots of code. Screenshots only for visual/UI changes.
-- Title: imperative, ≤ 60 chars, no conventional-commit prefix unless the repo uses it.
+Rules:
+- Keep the body under ~15 lines for anything but a genuinely complex change.
+- Omit trivial changes (renames, extracted variables, added imports) from the body; the diff covers them.
+- Write the title in imperative mood, 60 chars max.
+- Describe the change, not the process: state what the code does now, skip the journey.

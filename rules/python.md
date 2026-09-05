@@ -4,19 +4,20 @@ paths:
   - "**/*.py"
 ---
 
-# Python Module Layout
+# Python layout
 
-## Structure
-- Package layout: `app/` or `src/<pkg>/` with one module per concern (`models.py`, `services.py`, `routes.py`, `config.py`). No `utils.py` dumping ground — split by domain (`text_utils.py`, `date_utils.py`) or fold into the owning module.
-- One class or one cohesive function family per module. Modules > ~300 lines get split by responsibility.
-- Tests mirror the package: `app/services.py` → `tests/test_services.py`.
+- Use app/ or src/<pkg>/ with one module per concern: models.py, services.py, routes.py, config.py.
+- Split by domain instead of a utils.py dumping ground: text_utils.py, date_utils.py, or fold into the owning module.
+- Keep one cohesive class or function family per module. Split modules over ~300 lines by responsibility.
+- Mirror tests to the package: app/services.py maps to tests/test_services.py.
 
 ## Conventions
-- snake_case modules/functions, PascalCase classes, UPPER_SNAKE constants. Private = `_leading_underscore`.
-- Full type hints on all public functions and any function > 5 lines. `from __future__ import annotations` where helpful.
-- No wildcard imports. No `import *`. Explicit relative or absolute imports only.
-- Pydantic/dataclasses for structured data, not raw dicts, when the shape is stable.
-- Errors: raise specific exceptions; never bare `except:`. Catch only what you handle.
+- Use snake_case for modules and functions, PascalCase for classes, UPPER_SNAKE for constants, _leading_underscore for private.
+- Add full type hints to public functions and any function over 5 lines.
+- Use explicit imports; each import names what it uses.
+- Model stable data shapes with Pydantic or dataclasses rather than raw dicts.
+- Raise specific exceptions and catch only what you handle.
+- Use async for I/O-bound code and keep blocking calls (requests, time.sleep, sync file IO) out of async def.
 
-## Async
-- Async functions only call async functions — no blocking calls (requests, time.sleep, sync file IO) inside `async def`.
+## Tests
+Use the testing rules in rules/testing.md for all test code.

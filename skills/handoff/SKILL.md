@@ -1,29 +1,28 @@
 ---
 name: handoff
-description: Write a session handoff file so the next session can resume without re-explaining context. Use at the end of a long session, before /clear, or when context is filling up.
+description: Write a session handoff file so the next session resumes without re-briefing. Use at the end of a long session, before /clear, or when context fills.
 ---
 
-# Session Handoff
+# Handoff
 
-Write `HANDOFF.md` in the project root (or update it) with EXACTLY this structure, terse:
+Write or update HANDOFF.md in the project root:
 
 ```markdown
-# Handoff — <date>
+# Handoff - <date>
 ## State
-<What works now, what was just completed. 2–4 bullets.>
-## Decisions made
-<Each decision + one-line rationale. Include rejected approaches so they aren't re-tried.>
-## In progress / Next steps
-<Ordered list. Each item: what + which files.>
+<what works now, what was just completed: 2-4 bullets>
+## Decisions
+<decision + one-line rationale, including rejected approaches>
+## Next steps
+<ordered list, each with target files>
 ## Key files
-<Path: 1-line why it matters. Max ~8.>
-## Open questions / blockers
-<Anything unresolved. "None" if empty.>
+<path: one-line reason, max 8>
+## Open questions
+<or "None">
 ```
 
 Rules:
-- Under ~60 lines. This file is the rehydration point for a fresh context — a future session reads it FIRST and resumes without me re-explaining anything.
-- Include exact commands to run the tests/dev server.
-- Include gotchas discovered the hard way (the thing that ate 30 minutes).
-- Never include full file contents or long logs — paths and pointers only.
-- After writing it, confirm with one line: "Handoff written: N decisions, M next steps."
+- Keep it under 60 lines. Paths and pointers only, no file contents or logs.
+- Include exact commands for tests and the dev server.
+- Include the gotcha that cost the most time this session.
+- End with one line: "Handoff written: N decisions, M next steps."

@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "changed=$(git diff --name-only --diff-filter=ACM HEAD 2>/dev/null); for f in $changed; do case \"$f\" in *.py) ruff format --quiet \"$f\" 2>/dev/null; ruff check --fix --quiet \"$f\" 2>/dev/null;; *.ts|*.tsx|*.js|*.jsx) npx prettier --write --log-level silent \"$f\" 2>/dev/null;; esac; done; exit 0"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f package.json ] && grep -q '\"test\"' package.json; then npx vitest run --silent 2>/dev/null || npm test --silent 2>&1 | tail -20; elif [ -f pytest.ini ] || [ -f pyproject.toml ] || ls tests/ >/dev/null 2>&1; then python3 -m pytest -q --tb=line 2>&1 | tail -15; fi; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

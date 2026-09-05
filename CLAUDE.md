@@ -11,6 +11,10 @@
 - Write a one-line docstring on every exported function, class, and route handler. Expand only when the behavior is genuinely complex.
 - Keep all inline code out of comments: delete dead code in the same change that removes it.
 
+# Commitments
+- Follow through on stated actions. If you say you will do something, do it in the same turn. Do not announce an action and then substitute your own judgment about whether it's needed.
+- If you believe a requested step should be skipped or changed, say why and ask. The decision is mine.
+
 # Git workflow
 - Create a branch before committing: git checkout -b <type>/<slug>, then commit.
 - Push feature branches and open a PR. main receives changes only through PR merge.

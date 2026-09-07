@@ -29,17 +29,16 @@ src/
 
 ## Imports
 - Prefer aliased paths over relative ones: use `@/lib/...`, `@/components/...`, `@features/<name>` style imports instead of `../../` chains.
-- Cross-feature and cross-layer imports must use an alias. Relative paths (`./`, `../`) are allowed only within the same feature directory.
+- Import cross-feature and cross-layer modules by alias; reserve relative paths (`./`, `../`) for imports within the same feature directory.
 - If a repo lacks path aliases, add them to tsconfig.json (`baseUrl` + `paths`) and matching bundler/vitest resolution before importing across directories.
-- Never import a feature's internals (`@features/x/components/...`) from another feature; go through its public `index.ts`.
+- Reach another feature's public surface through its `index.ts` (`@features/x`); import internals only from within that feature.
 
 ## Barrel exports
-- A barrel (`index.ts`) is a public API boundary, not a default. Create one only where outside code consumes the folder: each feature's `index.ts`, shared `components/` and `lib/` entry points, and published package entries.
-- Do NOT create app-wide barrels (e.g. a single `src/index.ts` re-exporting everything) or barrels whose only purpose is tidier imports — path aliases give short imports without the module-graph cost.
-- Re-export explicitly: `export { Button } from './Button'`, never `export *`. Wildcard barrels defeat tree-shaking and hide the public surface.
-- Keep barrels pure: re-exports only, no constants, no logic, no side effects. Mark type-only re-exports with `export type`.
-- Inside the folder, import siblings directly (`./Button`), never through the folder's own barrel — that's how import cycles start.
-- Keep barrels small; a barrel with dozens of exports is a smell — split the module instead.
+- Treat a barrel (`index.ts`) as a public API boundary: create one where outside code consumes the folder (each feature's `index.ts`, shared `components/` and `lib/` entry points, published package entries), and rely on path aliases for short imports elsewhere.
+- Re-export explicitly: `export { Button } from './Button'` — this keeps tree-shaking effective and the public surface visible, where `export *` forces the bundler to treat the whole sibling surface as reachable.
+- Keep barrels pure: limit them to re-exports, and put constants, logic, and side effects in their own modules. Mark type-only re-exports with `export type`.
+- Inside the folder, import siblings directly (`./Button`); route imports through the barrel only from outside the folder, which keeps import cycles out.
+- Split oversized modules rather than letting a barrel accumulate dozens of exports.
 
 ## Conventions
 - Name component files in PascalCase (UserProfile.tsx), hooks useX.ts, everything else camelCase.

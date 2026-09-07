@@ -27,6 +27,12 @@ src/
 - Write business logic as plain testable functions in api/ or lib/.
 - Split any component over ~150 lines or containing fetch/store logic: logic into a hook, markup into a component.
 
+## Imports
+- Prefer aliased paths over relative ones: use `@/lib/...`, `@/components/...`, `@features/<name>` style imports instead of `../../` chains.
+- Cross-feature and cross-layer imports must use an alias. Relative paths (`./`, `../`) are allowed only within the same feature directory.
+- If a repo lacks path aliases, add them to tsconfig.json (`baseUrl` + `paths`) and matching bundler/vitest resolution before importing across directories.
+- Never import a feature's internals (`@features/x/components/...`) from another feature; go through its public `index.ts`.
+
 ## Conventions
 - Name component files in PascalCase (UserProfile.tsx), hooks useX.ts, everything else camelCase.
 - One component per file. Colocate small private types; extract shared types at the second consumer.

@@ -33,6 +33,14 @@ src/
 - If a repo lacks path aliases, add them to tsconfig.json (`baseUrl` + `paths`) and matching bundler/vitest resolution before importing across directories.
 - Never import a feature's internals (`@features/x/components/...`) from another feature; go through its public `index.ts`.
 
+## Barrel exports
+- A barrel (`index.ts`) is a public API boundary, not a default. Create one only where outside code consumes the folder: each feature's `index.ts`, shared `components/` and `lib/` entry points, and published package entries.
+- Do NOT create app-wide barrels (e.g. a single `src/index.ts` re-exporting everything) or barrels whose only purpose is tidier imports — path aliases give short imports without the module-graph cost.
+- Re-export explicitly: `export { Button } from './Button'`, never `export *`. Wildcard barrels defeat tree-shaking and hide the public surface.
+- Keep barrels pure: re-exports only, no constants, no logic, no side effects. Mark type-only re-exports with `export type`.
+- Inside the folder, import siblings directly (`./Button`), never through the folder's own barrel — that's how import cycles start.
+- Keep barrels small; a barrel with dozens of exports is a smell — split the module instead.
+
 ## Conventions
 - Name component files in PascalCase (UserProfile.tsx), hooks useX.ts, everything else camelCase.
 - One component per file. Colocate small private types; extract shared types at the second consumer.

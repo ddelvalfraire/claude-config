@@ -27,6 +27,19 @@ src/
 - Write business logic as plain testable functions in api/ or lib/.
 - Split any component over ~150 lines or containing fetch/store logic: logic into a hook, markup into a component.
 
+## Imports
+- Prefer aliased paths over relative ones: use `@/lib/...`, `@/components/...`, `@features/<name>` style imports instead of `../../` chains.
+- Import cross-feature and cross-layer modules by alias; reserve relative paths (`./`, `../`) for imports within the same feature directory.
+- If a repo lacks path aliases, add them to tsconfig.json (`baseUrl` + `paths`) and matching bundler/vitest resolution before importing across directories.
+- Reach another feature's public surface through its `index.ts` (`@features/x`); import internals only from within that feature.
+
+## Barrel exports
+- Treat a barrel (`index.ts`) as a public API boundary: create one where outside code consumes the folder (each feature's `index.ts`, shared `components/` and `lib/` entry points, published package entries), and rely on path aliases for short imports elsewhere.
+- Re-export explicitly: `export { Button } from './Button'` — this keeps tree-shaking effective and the public surface visible, where `export *` forces the bundler to treat the whole sibling surface as reachable.
+- Keep barrels pure: limit them to re-exports, and put constants, logic, and side effects in their own modules. Mark type-only re-exports with `export type`.
+- Inside the folder, import siblings directly (`./Button`); route imports through the barrel only from outside the folder, which keeps import cycles out.
+- Split oversized modules rather than letting a barrel accumulate dozens of exports.
+
 ## Conventions
 - Name component files in PascalCase (UserProfile.tsx), hooks useX.ts, everything else camelCase.
 - One component per file. Colocate small private types; extract shared types at the second consumer.

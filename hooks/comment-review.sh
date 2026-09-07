@@ -12,7 +12,7 @@ violations=""
 while IFS= read -r line; do
   trimmed=$(printf '%s' "$line" | sed 's/^[[:space:]]*//')
   case "$trimmed" in
-    \#*|//*|/\*|\*|<!--*)
+    \#*|//*|/\*|\*|'<!--'*)
       # skip shebangs, pragma-ish, and URLs inside strings
       case "$trimmed" in
         '#!'*|'#type'*|'// '*'http'*|'#'*'http'*) continue ;;

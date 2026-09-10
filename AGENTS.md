@@ -94,8 +94,7 @@ src/
 - Use named exports for components; allow a default export only at each feature index.ts.
 
 ## Ternaries
-- Never write nested or multi-line ternary expressions. A ternary is allowed only when it fits on one line and its branches are simple: a single function call or a plain variable/constant.
-- Anything else (chained conditions, ternaries as sub-expressions, ternaries spanning lines) becomes if/else statements or an early-return helper function.
+- Write conditional assignments as if/else statements or an early-return helper function. Reserve the ternary for single-line cases where both branches are simple: a single function call or a plain variable/constant.
 
 ```ts
 // Bad - nested multi-line ternary

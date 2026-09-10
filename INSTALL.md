@@ -2,10 +2,14 @@
 
 Drop-in Claude Code agent configuration. Copy these files into any project or into ~/.claude/ so every session starts with your conventions instead of re-explaining them.
 
+Also compatible with Codex and OpenCode: AGENTS.md carries the same rules for both, OpenCode gets slash commands and a hook plugin. See "Codex and OpenCode" below.
+
 ## Contents
 
 ```
 CLAUDE.md                    reply style, comment rules, verification honesty
+AGENTS.md                    generated: same rules for Codex and OpenCode (do not edit by hand)
+scripts/generate-agents-md.py  regenerates AGENTS.md from CLAUDE.md + rules/ + skills/
 rules/react.md               React layering: hooks vs business vs UI (loads on *.ts/tsx)
 rules/python.md              Python layout and conventions (loads on *.py)
 rules/testing.md             test bar: happy path, edge cases, fault paths, input validation
@@ -13,9 +17,39 @@ skills/tdd/                  /tdd: spec -> failing tests -> green -> gap check
 skills/pr/                   /pr: terse standardized PRs
 skills/handoff/              /handoff: writes HANDOFF.md for the next session
 skills/new-dep/              /new-dep: version/compat/docs check before any dependency
+opencode/command/            same four workflows as OpenCode slash commands
+opencode/plugins/claude-config-hooks.js  block-main-commit + biome format as an OpenCode plugin
 settings.json                hooks: format on edit, run tests before stop
 PULL_REQUEST_TEMPLATE.md     GitHub PR template matching /pr
 ```
+
+## Codex and OpenCode
+
+Both read `AGENTS.md` from the project root (or `~/.codex/AGENTS.md` / `~/.config/opencode/AGENTS.md` globally). It is generated, so edit CLAUDE.md or rules/ and regenerate:
+
+```bash
+python3 scripts/generate-agents-md.py
+```
+
+### Codex
+
+```bash
+cp AGENTS.md /path/to/project/AGENTS.md     # or ~/.codex/AGENTS.md for global
+```
+
+Codex has no hook or skill system: the block-main-commit guard, biome format-on-edit, and test-on-stop hooks do not apply. The workflows (/tdd, /pr, etc.) are embedded in AGENTS.md as sections, so Codex follows them when the prompt names them ("use the tdd workflow from AGENTS.md").
+
+### OpenCode
+
+```bash
+cd /path/to/project
+cp ~/code/github.com/ddelvalfraire/claude-config/AGENTS.md AGENTS.md   # rules at project root
+mkdir -p .opencode/command .opencode/plugins
+cp ~/code/github.com/ddelvalfraire/claude-config/opencode/command/*.md .opencode/command/
+cp ~/code/github.com/ddelvalfraire/claude-config/opencode/plugins/claude-config-hooks.js .opencode/plugins/
+```
+
+This gives you the four workflows as `/tdd`, `/pr`, `/handoff`, `/new-dep` commands, plus the plugin recreating block-main-commit (blocks commit/push on main) and biome format-on-edit. The plugin requires Bun (OpenCode's runtime). The Claude test-on-stop hook has no OpenCode equivalent event and is not ported.
 
 ## Install into a project
 

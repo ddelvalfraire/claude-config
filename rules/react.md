@@ -45,3 +45,25 @@ src/
 - One component per file. Colocate small private types; extract shared types at the second consumer.
 - Type all props explicitly. Use context or a store instead of prop-drilling past two levels.
 - Use named exports for components; allow a default export only at each feature index.ts.
+
+## Ternaries
+- Never write nested or multi-line ternary expressions. A ternary is allowed only when it fits on one line and its branches are simple: a single function call or a plain variable/constant.
+- Anything else (chained conditions, ternaries as sub-expressions, ternaries spanning lines) becomes if/else statements or an early-return helper function.
+
+```ts
+// Bad - nested multi-line ternary
+const slugError =
+  slugIssue !== 'none'
+    ? i18n._(orgSlugMessage(slugIssue, slug))
+    : takenSlug === slug
+      ? i18n._(orgSlugMessage('taken', slug))
+      : null;
+
+// Good - if/else
+let slugError: string | null = null;
+if (slugIssue !== 'none') {
+  slugError = i18n._(orgSlugMessage(slugIssue, slug));
+} else if (takenSlug === slug) {
+  slugError = i18n._(orgSlugMessage('taken', slug));
+}
+```

@@ -23,7 +23,7 @@ Cover, per requirement in the spec:
 
 ## Structure
 - Follow Arrange-Act-Assert, one behavior per test.
-- Name tests test_<unit>_<scenario>_<expected> (e.g. test_parse_header_missing_returns_400).
+- For Python, name tests test_<unit>_<scenario>_<expected> (e.g. test_parse_header_missing_returns_400). For JavaScript/TypeScript, use readable behavior descriptions in `test`/`it`; for Go, use `TestXxx` names recognized by `go test`.
 - Write tests from the spec before the implementation; drive code to green. For bugfixes, write the failing reproduction first.
 
 ## Reporting

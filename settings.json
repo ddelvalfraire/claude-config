@@ -3,42 +3,18 @@
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/block-main-commit.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/comment-review.sh"
-          }
-        ]
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/run_hook.py\" guard" }]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "changed=$(git diff --name-only --diff-filter=ACM HEAD 2>/dev/null); for f in $changed; do case \"$f\" in *.ts|*.tsx|*.js|*.jsx|*.json) npx biome check --write --silent \"$f\" 2>/dev/null;; esac; done; exit 0"
-          }
-        ]
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/run_hook.py\" after", "timeout": 120 }]
       }
     ],
     "Stop": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "pnpm test 2>&1 | tail -15; exit 0"
-          }
-        ]
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/run_hook.py\" stop", "timeout": 130 }]
       }
     ]
   }

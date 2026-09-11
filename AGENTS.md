@@ -77,12 +77,12 @@ src/
 ## Imports
 - Prefer aliased paths over relative ones: use `@/lib/...`, `@/components/...`, `@features/<name>` style imports instead of `../../` chains.
 - Import cross-feature and cross-layer modules by alias; reserve relative paths (`./`, `../`) for imports within the same feature directory.
-- If a repo lacks path aliases, add them to tsconfig.json (`baseUrl` + `paths`) and matching bundler/vitest resolution before importing across directories.
+- If a repo lacks path aliases, add `paths` to tsconfig.json and matching bundler/vitest resolution before importing across directories. Resolve paths relative to the tsconfig; do not introduce deprecated `baseUrl` on modern TypeScript.
 - Reach another feature's public surface through its `index.ts` (`@features/x`); import internals only from within that feature.
 
 ## Barrel exports
 - Treat a barrel (`index.ts`) as a public API boundary: create one where outside code consumes the folder (each feature's `index.ts`, shared `components/` and `lib/` entry points, published package entries), and rely on path aliases for short imports elsewhere.
-- Re-export explicitly: `export { Button } from './Button'` — this keeps tree-shaking effective and the public surface visible, where `export *` forces the bundler to treat the whole sibling surface as reachable.
+- Re-export explicitly: `export { Button } from './Button'` keeps the public surface visible and avoids accidental API expansion. Both explicit and star re-exports can be tree-shaken; results depend on the bundler and module side effects.
 - Keep barrels pure: limit them to re-exports, and put constants, logic, and side effects in their own modules. Mark type-only re-exports with `export type`.
 - Inside the folder, import siblings directly (`./Button`); route imports through the barrel only from outside the folder, which keeps import cycles out.
 - Split oversized modules rather than letting a barrel accumulate dozens of exports.
@@ -132,7 +132,7 @@ Cover, per requirement in the spec:
 
 ## Structure
 - Follow Arrange-Act-Assert, one behavior per test.
-- Name tests test_<unit>_<scenario>_<expected> (e.g. test_parse_header_missing_returns_400).
+- For Python, name tests test_<unit>_<scenario>_<expected> (e.g. test_parse_header_missing_returns_400). For JavaScript/TypeScript, use readable behavior descriptions in `test`/`it`; for Go, use `TestXxx` names recognized by `go test`.
 - Write tests from the spec before the implementation; drive code to green. For bugfixes, write the failing reproduction first.
 
 ## Reporting
@@ -185,10 +185,10 @@ license: <x>, size: <y>
 
 # PR workflow
 
-1. Check `git status`: everything committed, nothing unrelated staged. Move unrelated changes to a separate branch and mention it.
-2. Rebase on the target branch. Run tests and linter; record the output.
-3. Branch as <type>/<short-slug> (feat/fix/chore/refactor). Commit in imperative mood, one concern per commit.
-4. Open the PR with this body:
+1. Inspect `git status`, the diff, and recent history. Preserve unrelated changes; ask before moving or stashing user work.
+2. Create or use a feature branch named <type>/<short-slug> (feat/fix/chore/refactor) before committing. Stage only intended files and commit in imperative mood, one concern per commit.
+3. With a clean working tree, fetch and rebase the feature branch on the target branch. Run tests and linter; record the output. If a published branch would require a force-push, ask first.
+4. Push the feature branch, then open the PR with this body:
 
 ```markdown
 ## What
@@ -214,7 +214,7 @@ Rules:
 # TDD: spec, failing tests, green
 
 1. Restate the spec as a checkbox list of behaviors: happy path, edge cases, fault paths (see testing rules). Show the list. Ask about ambiguity instead of guessing a requirement.
-2. Write one failing test per behavior, named test_<unit>_<scenario>_<expected>. Run them and confirm each fails on an assertion, not an import error. Report the output.
+2. Write one failing test per behavior, using the language-specific naming conventions in the testing rules. Run them and confirm each fails on an assertion, not an import error. Report the output.
 3. Write the smallest implementation that turns the tests green. Run and report the real result.
 4. Diff the test list against the spec. List uncovered requirements as explicit gaps.
 

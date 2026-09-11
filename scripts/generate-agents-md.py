@@ -13,12 +13,15 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
 def strip_frontmatter(text: str) -> str:
-    if text.startswith("---\n"):
-        return text.split("---\n", 2)[2].lstrip("\n")
+    """Strip only a complete frontmatter block bounded by delimiter lines."""
+    match = re.match(r"\A---\r?\n.*?\r?\n---(?:\r?\n|$)", text, re.DOTALL)
+    if match:
+        return text[match.end():].lstrip("\r\n")
     return text
 
 
 def scope_from_frontmatter(text: str) -> str | None:
+    """Extract the path scopes used by this repository's rule templates."""
     m = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
     if not m:
         return None
@@ -27,6 +30,7 @@ def scope_from_frontmatter(text: str) -> str | None:
 
 
 def main() -> None:
+    """Regenerate the standalone instruction bundle from its source files."""
     parts = []
 
     claude_md = ROOT / "CLAUDE.md"
@@ -41,7 +45,7 @@ def main() -> None:
             block += f"_Applies to: {scope}_\n"
         parts.append(block + "\n" + body)
 
-    # Skills: Codex/OpenCode have no skill loader, so embed the workflows as sections.
+    # Keep workflows available even when only AGENTS.md is installed.
     for skill in sorted((ROOT / "skills").glob("*/SKILL.md")):
         parts.append(strip_frontmatter(skill.read_text()).strip())
 

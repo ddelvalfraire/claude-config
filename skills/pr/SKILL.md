@@ -5,10 +5,10 @@ description: Create a standardized PR. Use when asked to open a PR or when finis
 
 # PR workflow
 
-1. Check `git status`: everything committed, nothing unrelated staged. Move unrelated changes to a separate branch and mention it.
-2. Rebase on the target branch. Run tests and linter; record the output.
-3. Branch as <type>/<short-slug> (feat/fix/chore/refactor). Commit in imperative mood, one concern per commit.
-4. Open the PR with this body:
+1. Inspect `git status`, the diff, and recent history. Preserve unrelated changes; ask before moving or stashing user work.
+2. Create or use a feature branch named <type>/<short-slug> (feat/fix/chore/refactor) before committing. Stage only intended files and commit in imperative mood, one concern per commit.
+3. With a clean working tree, fetch and rebase the feature branch on the target branch. Run tests and linter; record the output. If a published branch would require a force-push, ask first.
+4. Push the feature branch, then open the PR with this body:
 
 ```markdown
 ## What

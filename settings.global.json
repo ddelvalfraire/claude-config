@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PreToolUse": [{ "matcher": "Bash", "hooks": [
+      { "type": "command", "command": "python3 \"$HOME/.claude/hooks/run_hook.py\" guard" }
+    ] }],
+    "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [
+      { "type": "command", "command": "python3 \"$HOME/.claude/hooks/run_hook.py\" after", "timeout": 120 }
+    ] }],
+    "Stop": [{ "hooks": [
+      { "type": "command", "command": "python3 \"$HOME/.claude/hooks/run_hook.py\" stop", "timeout": 130 }
+    ] }]
+  }
+}

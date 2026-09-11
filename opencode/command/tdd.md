@@ -5,7 +5,7 @@ description: Spec-first TDD workflow. Use when implementing any feature or bugfi
 # TDD: spec, failing tests, green
 
 1. Restate the spec as a checkbox list of behaviors: happy path, edge cases, fault paths. Show the list. Ask about ambiguity instead of guessing a requirement.
-2. Write one failing test per behavior, named test_<unit>_<scenario>_<expected>. Run them and confirm each fails on an assertion, not an import error. Report the output.
+2. Write one failing test per behavior, using the language-specific naming conventions in the testing rules. Run them and confirm each fails on an assertion, not an import error. Report the output.
 3. Write the smallest implementation that turns the tests green. Run and report the real result.
 4. Diff the test list against the spec. List uncovered requirements as explicit gaps.
 

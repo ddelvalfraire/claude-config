@@ -1,75 +1,41 @@
-/**
- * OpenCode plugin port of claude-config hooks (settings.json).
- *
- * Ported hooks:
- * - block-main-commit.sh (PreToolUse: Bash) -> block commit/push on main
- * - biome format on Edit/Write (PostToolUse)
- * - Stop hook: run tests before stop is not portable here; OpenCode plugins
- *   have no Stop-equivalent event, so it is intentionally omitted.
- *
- * Install: copy to <project>/.opencode/plugins/ or ~/.config/opencode/plugins/
- * Docs: https://opencode.ai/docs/plugins
- */
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
-async function currentBranch() {
-  const proc = Bun.spawn(["git", "branch", "--show-current"], {
-    cwd: process.cwd(),
-    stdout: "pipe",
-    stderr: "ignore",
-  })
-  const out = await new Response(proc.stdout).text()
-  await proc.exited
-  return out.trim() || null
+const installed = fileURLToPath(new URL('../hooks/run_hook.py', import.meta.url));
+const source = fileURLToPath(new URL('../../hooks/run_hook.py', import.meta.url));
+
+function runHook(action, args, directory) {
+  return new Promise((resolve, reject) => {
+    const script = existsSync(installed) ? installed : source;
+    const child = spawn('python3', [script, action], {
+      cwd: directory,
+      stdio: ['pipe', 'ignore', 'pipe'],
+    });
+    let feedback = '';
+    child.stderr.on('data', (chunk) => { feedback += chunk; });
+    child.on('error', reject);
+    child.stdin.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(feedback || `claude-config hook exited ${code}`));
+    });
+    child.stdin.end(JSON.stringify({ cwd: directory, tool_input: args }));
+  });
 }
 
-export const BlockMainCommit = {
-  name: "block-main-commit",
-  hooks: {
-    "tool.execute.before": async (input, output) => {
-      const tool = output?.tool ?? input?.tool
-      const callArgs = output?.args ?? {}
-      if (tool !== "bash") return
-
-      const cmd = callArgs?.command ?? ""
-      const branch = await currentBranch()
-      if (!branch) return
-      if (!/^(main|master)$/.test(branch)) return
-
-      if (/git\s+push[^|;&]*(main|master)([^a-z]|$)|git\s+push\s+origin(\s|$)/.test(cmd)) {
-        throw new Error(
-          "BLOCKED: never push directly to main. Create a branch, push it, open a PR: " +
-            "git checkout -b <type>/<slug> && git push -u origin <branch> && gh pr create"
-        )
-      }
-      if (/git\s+commit/.test(cmd)) {
-        throw new Error(
-          "BLOCKED: never commit on main. git checkout -b <type>/<slug> first, then commit."
-        )
-      }
-    },
+/** Connect shared checks to OpenCode's tool lifecycle. */
+export const ClaudeConfigHooks = async ({ directory }) => ({
+  'tool.execute.before': async (input, output) => {
+    if (input.tool === 'bash') await runHook('guard', output.args, directory);
   },
-}
-
-export const FormatOnEdit = {
-  name: "format-on-edit",
-  hooks: {
-    "tool.execute.after": async (input, output) => {
-      const tool = output?.tool ?? input?.tool
-      const callArgs = output?.args ?? {}
-      if (tool !== "edit" && tool !== "write") return
-
-      const file = callArgs?.filePath ?? callArgs?.file_path ?? ""
-      if (!/\.(ts|tsx|js|jsx|json)$/.test(file)) return
-
-      const proc = Bun.spawn(["npx", "biome", "check", "--write", "--silent", file], {
-        cwd: process.cwd(),
-        stdout: "ignore",
-        stderr: "ignore",
-      })
-      await proc.exited
-      return
-    },
+  'tool.execute.after': async (input, output) => {
+    if (!['edit', 'write', 'apply_patch'].includes(input.tool)) return;
+    try {
+      await runHook('after', input.args, directory);
+    } catch (error) {
+      // The edit already succeeded; keep its result and append actionable feedback.
+      output.output = `${output.output ?? ''}\n${error.message}`;
+    }
   },
-}
-
-export const ClaudeConfigHooks = [BlockMainCommit, FormatOnEdit]
+});

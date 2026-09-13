@@ -81,14 +81,23 @@ const cutoff = Temporal.Now.instant().add(TRIAL_LENGTH).epochMilliseconds;
 
 # Error handling (JavaScript/TypeScript)
 
-- Return `Result<T, E>` from neverthrow for recoverable failures in business logic: `ok(value)` / `err(error)` make failure part of the type signature instead of an exception the caller can ignore.
-- Use `ResultAsync` / `ResultAsync.fromPromise` for async operations that can fail, and chain with `.map` / `.andThen` / `.asyncAndThen` (`.asyncAndThen` where the next step is async) so sync and async failure paths compose in one pipeline.
-- Use `safeTry` with `yield*` when a flow chains several Results, instead of an `isErr()` ladder after each call; the generator short-circuits on the first Err.
-- Wrap throwing third-party APIs with `Result.fromThrowable` / `ResultAsync.fromThrowable` at the edge, so thrown errors become typed values where they enter the codebase.
+When neverthrow is already a project dependency, write business logic as Results:
+
+- Return `Result<T, E>` from functions for recoverable failures: `ok(value)` / `err(error)` put failure in the type signature so callers must handle it.
+- Use `ResultAsync` (`ResultAsync.fromPromise` / `fromSafePromise`) for async operations that can fail; bridge sync-to-async with `.asyncAndThen` / `.asyncMap` and end the chain at the consumer.
+- Pick `.map` for transformations that cannot fail and `.andThen` for steps that return their own Result; mixing them up hides which steps carry failure paths.
+- Use `safeTry` with `yield*` inside a generator when a flow chains several Results; it short-circuits on the first Err and reads like Rust's `?`. Prefer it over an `isErr()` ladder after each call.
+- Wrap throwing third-party APIs with `Result.fromThrowable` / `ResultAsync.fromThrowable` where they enter the codebase, converting exceptions into typed values at the edge.
+- Type the E channel as a literal union or discriminated union (`'NotFound' | 'Unauthorized'`), one type per function's return signature; v7.1+ infers `err('NotFound')` narrowly, so lean on inference and only annotate when the compiler needs it.
+- Consume Results with `.match(okBranch, errBranch)` or `.unwrapOr(default)` so both branches are handled at once; reserve `_unsafeUnwrap` for tests and treat `unwrapOr` defaults as an explicit product decision.
+- Aggregate independent Results with `Result.combine` (short-circuits on first Err) or `Result.combineWithAllErrors` (collects all) instead of nesting chains.
+- Keep pipeline stages small and named: extract each `andThen` step into its own function so the chain reads as the business flow and each stage is testable in isolation.
+
+When neverthrow is absent, keep the same shape with plain TypeScript plus these rules:
+
 - Confine `try`/`catch` to boundary layers (HTTP handlers, message consumers, CLI entry points, top-level server setup) where the alternative is process death or a 500 response; the catch translates the error into a response or log, then control returns.
-- Write business logic exception-free: functions either return a Result or let the boundary's catch handle the escape. A try/catch inside a service function signals a missing Result in that layer's API.
-- Type errors as discriminated unions or literal strings (v7.1+ narrows `err('NotFound')`), and end pipelines with `.match` or `.unwrapOr` so both branches are handled; reserve `_unsafeUnwrap` for tests.
-- Combine independent Results with `Result.combine` (short-circuits on first error) or `Result.combineWithAllErrors` (aggregates all) instead of nested chaining.
+- Write business logic exception-free: functions either return a typed error value (discriminated union with a `success`/`error` variant) or let the boundary's catch handle the escape. A try/catch inside a service function signals a missing error type in that layer's API.
+- Prefer `Promise.reject` with a typed Error subclass over throwing bare strings; a thrown string carries no type information for the boundary's catch.
 
 ```ts
 // Bad - try/catch threaded through business logic, errors untyped
@@ -102,7 +111,7 @@ async function registerUser(input: RegistrationInput) {
   }
 }
 
-// Good - typed Results, catch only at the HTTP boundary
+// Good - typed Results (with neverthrow), catch only at the HTTP boundary
 type RegisterError = 'EmailTaken' | 'WeakPassword' | 'EmailError';
 
 function registerUser(input: RegistrationInput): ResultAsync<User, RegisterError> {
@@ -119,6 +128,32 @@ app.post('/register', async (req, res) => {
     (user) => res.json(user),
     (error) => res.status(400).json({ error }),
   );
+});
+```
+
+```ts
+// Good - same shape without neverthrow: typed error value, catch at the boundary
+type RegisterResult =
+  | { ok: true; user: User }
+  | { ok: false; error: 'EmailTaken' | 'WeakPassword' | 'EmailError' };
+
+async function registerUser(input: RegistrationInput): Promise<RegisterResult> {
+  const existing = await db.users.findByEmail(input.email);
+  if (existing) return { ok: false, error: 'EmailTaken' };
+  if (!isStrongPassword(input.password)) return { ok: false, error: 'WeakPassword' };
+  const user = await db.users.create(input);
+  const delivery = await mailer.sendWelcome(user).then(
+    () => ({ ok: true as const }),
+    () => ({ ok: false as const, error: 'EmailError' as const }),
+  );
+  if (!delivery.ok) return delivery;
+  return { ok: true, user };
+}
+
+app.post('/register', async (req, res) => {
+  const result = await registerUser(parseInput(req.body));
+  if (result.ok) return res.json(result.user);
+  res.status(400).json({ error: result.error });
 });
 ```
 

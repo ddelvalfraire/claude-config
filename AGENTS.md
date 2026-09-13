@@ -54,6 +54,23 @@ if (retries > MAX_RETRY_ATTEMPTS) throw new Error('too many');
 const timeout = REQUEST_TIMEOUT_MS;
 ```
 
+# Time and durations (JavaScript/TypeScript)
+
+- Use Temporal for all time and duration values: `Temporal.PlainDate`, `Temporal.ZonedDateTime`, and especially `Temporal.Duration.from({ minutes: 30 })` in place of a `Date` plus a hardcoded millisecond count.
+- Build durations from unit-named fields so the unit lives in the code: `Temporal.Duration.from({ minutes: 30 })` replaces `30 * 60 * 1000`, whose unit and intent are invisible.
+- Install `temporal-polyfill` (global entrypoint) in environments without native Temporal; it uses the native implementation when present.
+- Keep Date only at the edges: convert to Temporal when it enters the codebase (`Date.prototype.toTemporalInstant`) and convert back only when a dependent API demands it.
+- Store and pass instants as `Temporal.Instant` or ISO strings with explicit timezone (`Temporal.ZonedDateTime` for wall-clock meaning); treat a bare millisecond integer as a defect to name and convert at the boundary.
+
+```ts
+// Bad - hardcoded millisecond math on Date
+const cutoff = Date.now() + 30 * 24 * 60 * 60 * 1000;
+
+// Good - unit-named duration math
+const TRIAL_LENGTH = Temporal.Duration.from({ days: 30 });
+const cutoff = Temporal.Now.instant().add(TRIAL_LENGTH).epochMilliseconds;
+```
+
 # Naming variables
 
 - Name variables after the concept they hold, not their type or shape: `pendingInvites` over `inviteList2`, `isRetryable` over `flag`.

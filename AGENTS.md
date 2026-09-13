@@ -79,6 +79,49 @@ const cutoff = Temporal.Now.instant().add(TRIAL_LENGTH).epochMilliseconds;
 - Name booleans as assertions (`isValid`, `hasAccess`, `canRetry`) so call sites read as conditions.
 - Prefix private/enum internals with the language convention: `_leading_underscore` in Python, `#private` or underscore in TS, and let one naming scheme per file hold.
 
+# Error handling (JavaScript/TypeScript)
+
+- Return `Result<T, E>` from neverthrow for recoverable failures in business logic: `ok(value)` / `err(error)` make failure part of the type signature instead of an exception the caller can ignore.
+- Use `ResultAsync` / `ResultAsync.fromPromise` for async operations that can fail, and chain with `.map` / `.andThen` / `.asyncAndThen` (`.asyncAndThen` where the next step is async) so sync and async failure paths compose in one pipeline.
+- Use `safeTry` with `yield*` when a flow chains several Results, instead of an `isErr()` ladder after each call; the generator short-circuits on the first Err.
+- Wrap throwing third-party APIs with `Result.fromThrowable` / `ResultAsync.fromThrowable` at the edge, so thrown errors become typed values where they enter the codebase.
+- Confine `try`/`catch` to boundary layers (HTTP handlers, message consumers, CLI entry points, top-level server setup) where the alternative is process death or a 500 response; the catch translates the error into a response or log, then control returns.
+- Write business logic exception-free: functions either return a Result or let the boundary's catch handle the escape. A try/catch inside a service function signals a missing Result in that layer's API.
+- Type errors as discriminated unions or literal strings (v7.1+ narrows `err('NotFound')`), and end pipelines with `.match` or `.unwrapOr` so both branches are handled; reserve `_unsafeUnwrap` for tests.
+- Combine independent Results with `Result.combine` (short-circuits on first error) or `Result.combineWithAllErrors` (aggregates all) instead of nested chaining.
+
+```ts
+// Bad - try/catch threaded through business logic, errors untyped
+async function registerUser(input: RegistrationInput) {
+  try {
+    const user = await createUserInDb(input);
+    await sendWelcomeEmail(user);
+    return user;
+  } catch (e) {
+    throw new Error(`registration failed: ${e}`);
+  }
+}
+
+// Good - typed Results, catch only at the HTTP boundary
+type RegisterError = 'EmailTaken' | 'WeakPassword' | 'EmailError';
+
+function registerUser(input: RegistrationInput): ResultAsync<User, RegisterError> {
+  return safeTry(async function* () {
+    const user = yield* createUserInDb(input);
+    yield* sendWelcomeEmail(user);
+    return ok(user);
+  });
+}
+
+app.post('/register', async (req, res) => {
+  const result = await registerUser(parseInput(req.body));
+  result.match(
+    (user) => res.json(user),
+    (error) => res.status(400).json({ error }),
+  );
+});
+```
+
 # Regex
 
 - Compile or hoist every regex to a module-level named constant instead of inlining a pattern string in logic. Name it after what it matches: `SLUG_PATTERN`, `ISO_DATE_RE`, not `PATTERN1`.
